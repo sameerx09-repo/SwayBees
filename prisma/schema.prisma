@@ -2,9 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Postgres (Neon, via Vercel's marketplace integration) — was SQLite for
+// local-only MVP dev; switched for the live Vercel deployment, since
+// serverless functions can't reliably persist a file-based database.
+// directUrl bypasses Neon's connection pooler for migrations — pooled
+// (PgBouncer-style) connections don't support the prepared-statement/DDL
+// semantics `prisma migrate` needs.
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum Plan {
