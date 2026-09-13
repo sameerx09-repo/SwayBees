@@ -1,0 +1,11 @@
+# Belt-and-suspenders on top of .gitignore: `vercel deploy` uploads the
+# local working directory, and its respect for .gitignore has proven
+# unreliable in practice (a build log surfaced "Detected .env file"
+# after a deploy, meaning it was uploaded despite .gitignore excluding
+# it from git). Real secrets (DB password, SESSION_SECRET) live in
+# these files — never let them into a deployment bundle.
+.env
+.env.local
+.env*.local
+prisma/*.db
+prisma/*.db-journal
