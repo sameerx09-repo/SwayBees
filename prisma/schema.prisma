@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  STARTER
+  PRO
+}
+
+// Instagram has real OAuth (see lib/instagram.ts) and its own dedicated
+// fields on Influencer below. Twitter/Reddit are self-declared only —
+// no OAuth integration for those yet, matching the same "self-reported,
+// unverified" pattern as gender/age/location.
+enum Platform {
+  INSTAGRAM
+  TWITTER
+  REDDIT
+}
+
+// LIKE/SHARE are offered as ad-hoc admin task types (see app/admin) even
+// though no automated verification exists for either, in either
+// direction — Instagram exposes no API/scraping surface for "who liked
+// this" or "who shared this" (see WIP.md "Instagram integrations —
+// technical feasibility"). checkVerification reports these as pending
+// manual review immediately, same pattern as unverifiable Twitter/Reddit
+// tasks; an admin can manually mark them credited (app/admin/actions.ts
+// markInvitationCredited). TAG_FRIEND *is* auto-verifiable — it reuses
+// the comment-scrape path (lib/apify.ts) and additionally requires the
+// matched comment to contain at least one @mention.
+enum TaskType {
+  UGC_VIDEO
+  COMMENT
+  LIKE
+  SHARE
+  TAG_FRIEND
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  SUBMITTED
+  VERIFYING
+  CREDITED
+}
+
+enum LedgerStatus {
+  PENDING
+  CREDITED
+  PAID
+}
+
+// Platform-operator account — not a Brand, not an Influencer. Used to
+// post ad-hoc tasks (no real brand/budget behind them) for seeding
+// creator engagement before organic brand signups exist. No public
+// signup route; created via prisma/seed-admin.ts.
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Brand {
+  id           String   @id @default(cuid())
+  companyName  String
+  email        String   @unique
+  passwordHash String
+  category     String
+  // Self-declared public handle (no OAuth) — lets the matching engine
+  // resolve a real target post to verify comment tasks against, via
+  // Apify scraping the brand's own public profile. See lib/apify.ts.
+  instagramHandle String?
+  createdAt    DateTime @default(now())
+
+  subscription Subscription?
+  criteria     AudienceCriteria?
+  tasks        Task[]
+}
+
+model Subscription {
+  id             String   @id @default(cuid())
+  brand          Brand    @relation(fields: [brandId], references: [id])
+  brandId        String   @unique
+  plan           Plan
+  monthlyBudget  Float
+  spentThisCycle Float    @default(0)
+  nextBillingAt  DateTime
+  createdAt      DateTime @default(now())
+}
+
+// Self-declared targeting criteria the matching engine gates on — see
+// WIP.md "Eligibility criteria": age/gender/location are unverified,
+// follower count/location hard-filters are enforced server-side elsewhere.
+model AudienceCriteria {
+  id       String   @id @default(cuid())
+  brand    Brand    @relation(fields: [brandId], references: [id])
+  brandId  String   @unique
+  gender   String // "any" | "women" | "men"
+  ageMin   Int
+  ageMax   Int
+  location String
+  niche    String
+  // Which platform this campaign runs on — gates which creators are
+  // eligible (Instagram-connected vs. self-declared Twitter/Reddit
+  // presence) and what kind of task the engine generates.
+  platform Platform @default(INSTAGRAM)
+}
+
+// A creator's presence on a platform. Instagram is tracked separately
+// on Influencer (it has real OAuth tokens); this covers the
+// self-declared, no-OAuth platforms (Twitter, Reddit) — a creator can
+// have zero, one, or both.
+model SocialAccount {
+  id             String     @id @default(cuid())
+  influencer     Influencer @relation(fields: [influencerId], references: [id])
+  influencerId   String
+  platform       Platform
+  handle         String
+  followerCount  Int        @default(0)
+  engagementRate Float      @default(0)
+  createdAt      DateTime   @default(now())
+
+  @@unique([influencerId, platform])
+}
+
+// Niches are many-to-many — see the "mix of categories" design: a
+// creator can plausibly be both a skincare and a fashion creator, and
+// SQLite has no native array column, so this is a real join table
+// rather than a comma-separated string.
+model Niche {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  influencers InfluencerNiche[]
+}
+
+model InfluencerNiche {
+  influencer   Influencer @relation(fields: [influencerId], references: [id])
+  influencerId String
+  niche        Niche      @relation(fields: [nicheId], references: [id])
+  nicheId      String
+
+  @@id([influencerId, nicheId])
+}
+
+model Influencer {
+  id                 String    @id @default(cuid())
+  handle             String    @unique
+  email              String    @unique
+  passwordHash       String
+  followerCount      Int       @default(0)
+  engagementRate     Float     @default(0)
+  instagramUserId    String?
+  instagramConnected Boolean   @default(false)
+  // Long-lived token (60-day expiry, refreshable) — see WIP.md "no
+  // webhook for stat changes, needs scheduled polling". Stored in
+  // plaintext for this prototype; encrypt at rest before production.
+  instagramAccessToken   String?
+  instagramTokenExpires  DateTime?
+  instagramLastSyncedAt  DateTime?
+  walletBalance      Float    @default(0)
+  // Self-declared, unverified — see WIP.md "Matching engine": Instagram's
+  // API doesn't reliably expose age/gender, so the persona-gate matches
+  // against whatever the influencer reports here.
+  gender             String?
+  age                Int?
+  location           String?
+  createdAt          DateTime @default(now())
+
+  invitations    TaskInvitation[]
+  ledgerEntries  WalletLedgerEntry[]
+  niches         InfluencerNiche[]
+  socialAccounts SocialAccount[]
+}
+
+// A dispatch-engine-generated (or admin ad-hoc, see app/admin) task —
+// see WIP.md "Task auto-generation & matching engine". See TaskType
+// above for why LIKE/SHARE exist despite being unverifiable. brandId is
+// nullable: an admin-created ad-hoc task has no real brand or budget
+// behind it — it exists purely to seed creator engagement before
+// organic brand signups exist. UI falls back to displaying
+// "SwayFam" as the task's source when brand is null.
+model Task {
+  id           String   @id @default(cuid())
+  brand        Brand?   @relation(fields: [brandId], references: [id])
+  brandId      String?
+  type         TaskType
+  platform     Platform @default(INSTAGRAM)
+  description  String
+  payoutAmount Float
+  // UGC_VIDEO: hashtag/mention the caption must contain — checked by
+  // scraping the creator's own public profile (lib/apify.ts), no OAuth
+  // token required. COMMENT: the public URL of the post to check
+  // comments on, resolved at generation time by scraping the brand's
+  // public profile (requires Brand.instagramHandle to be set — null
+  // otherwise, and verification reports that clearly rather than
+  // guessing a target).
+  verificationTag String?
+  targetPostUrl   String?
+  createdAt    DateTime @default(now())
+
+  invitations TaskInvitation[]
+}
+
+model TaskInvitation {
+  id           String           @id @default(cuid())
+  task         Task             @relation(fields: [taskId], references: [id])
+  taskId       String
+  influencer   Influencer       @relation(fields: [influencerId], references: [id])
+  influencerId String
+  status       InvitationStatus @default(PENDING)
+  respondedAt  DateTime?
+  createdAt    DateTime         @default(now())
+
+  ledgerEntry WalletLedgerEntry?
+}
+
+// Internal ledger only — no payment gateway at MVP (see WIP.md "Wallet
+// & payout model"). Monthly payout is a manual, off-platform process
+// that marks PENDING/CREDITED entries as PAID.
+model WalletLedgerEntry {
+  id           String         @id @default(cuid())
+  influencer   Influencer     @relation(fields: [influencerId], references: [id])
+  influencerId String
+  invitation   TaskInvitation @relation(fields: [invitationId], references: [id])
+  invitationId String         @unique
+  amount       Float
+  status       LedgerStatus   @default(PENDING)
+  createdAt    DateTime       @default(now())
+}

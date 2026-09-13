@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local SQLite dev database — never commit seed/test data or password hashes
+prisma/*.db
+prisma/*.db-journal
+
 # vercel
 .vercel
 
