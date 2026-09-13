@@ -112,7 +112,7 @@ export async function checkVerification(
     await db.$transaction([
       db.taskInvitation.update({
         where: { id: invitationId },
-        data: { status: InvitationStatus.CREDITED },
+        data: { status: InvitationStatus.CREDITED, creditedAt: new Date() },
       }),
       db.walletLedgerEntry.update({
         where: { invitationId },

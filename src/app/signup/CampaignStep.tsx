@@ -35,10 +35,10 @@ export function CampaignStep({ companyName }: { companyName: string }) {
   }, [plan, budget]);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center px-4 w-full">
       <StepIndicator step={2} />
 
-      <div className="w-[600px] bg-surface border border-border p-11 flex flex-col gap-8">
+      <div className="w-full max-w-[600px] bg-surface border border-border p-6 sm:p-11 flex flex-col gap-8">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">
             Set up your campaign, {companyName}
@@ -56,11 +56,11 @@ export function CampaignStep({ companyName }: { companyName: string }) {
 
           <div className="flex flex-col gap-3">
             <div className="text-xs text-muted">Plan</div>
-            <div className="grid grid-cols-2 border border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 border border-border">
               <button
                 type="button"
                 onClick={() => setPlan("starter")}
-                className={`p-4 flex flex-col gap-0.5 text-left border-r border-border ${
+                className={`p-4 flex flex-col gap-0.5 text-left border-b sm:border-b-0 sm:border-r border-border ${
                   plan === "starter" ? "bg-accent-soft" : ""
                 }`}
               >
@@ -152,7 +152,7 @@ export function CampaignStep({ companyName }: { companyName: string }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="flex flex-col gap-1.5">
                 <div className="text-[11px] text-faint">Age range</div>
                 <div className="flex items-baseline gap-2">

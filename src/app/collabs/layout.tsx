@@ -12,10 +12,10 @@ export default async function CollabsLayout({ children }: { children: React.Reac
   }
 
   return (
-    <div className="flex flex-col gap-8 px-18 py-10">
-      <header className="flex items-center justify-between pb-6 border-b border-border">
+    <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-8 lg:px-18 py-6 sm:py-10">
+      <header className="flex items-center justify-between gap-4 flex-wrap pb-6 border-b border-border">
         <Logo />
-        <div className="flex items-center gap-7">
+        <div className="flex items-center gap-4 sm:gap-7 flex-wrap">
           <div className="flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-full bg-gradient-social flex items-center justify-center text-[10px] font-bold text-white">
               {influencer.handle.replace(/^@/, "").charAt(0).toUpperCase()}
@@ -32,7 +32,7 @@ export default async function CollabsLayout({ children }: { children: React.Reac
               </a>
             )}
           </div>
-          <div className="flex flex-col items-end gap-0.5 pl-6 border-l border-border">
+          <div className="flex flex-col items-end gap-0.5 sm:pl-6 sm:border-l sm:border-border">
             <div className="text-[11px] text-muted">Wallet balance</div>
             <div className="font-mono text-lg font-medium">
               ${influencer.walletBalance.toFixed(2)}
@@ -41,14 +41,16 @@ export default async function CollabsLayout({ children }: { children: React.Reac
           </div>
           <a
             href="/logout"
-            className="text-[11px] text-muted pl-6 border-l border-border"
+            className="text-[11px] text-muted sm:pl-6 sm:border-l sm:border-border"
           >
             Log out
           </a>
         </div>
       </header>
 
-      <TabNav />
+      <div className="overflow-x-auto">
+        <TabNav />
+      </div>
 
       {children}
     </div>

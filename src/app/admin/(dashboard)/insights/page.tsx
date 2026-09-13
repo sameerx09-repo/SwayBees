@@ -1,22 +1,57 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdminSession } from "@/lib/auth";
-import { TASK_TYPE_LABEL } from "@/lib/task-type-label";
 import {
   computeOverview,
   computeByBrand,
   computeByCreator,
   computeByType,
   computeByPlatform,
+  computeCreditedTrend,
   type InsightRow,
+  type BrandBreakdown,
+  type CreatorBreakdown,
+  type TypeBreakdown,
+  type PlatformBreakdown,
 } from "@/lib/admin-insights";
-import { CreatorInsightsTable } from "./CreatorInsightsTable";
+import { InsightsTable, type InsightsColumn } from "./InsightsTable";
 
 export const dynamic = "force-dynamic";
 
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
+const brandColumns: InsightsColumn<BrandBreakdown>[] = [
+  { key: "name", label: "BRAND" },
+  { key: "taskCount", label: "COLLABS", format: "number" },
+  { key: "invitationCount", label: "INVITATIONS", format: "number" },
+  { key: "credited", label: "COMPLETED", format: "number" },
+  { key: "completionRate", label: "COMPLETION", format: "percent" },
+  { key: "totalCommitted", label: "COMMITTED", format: "money" },
+  { key: "totalCredited", label: "CREDITED", format: "money-success" },
+];
+
+const typeColumns: InsightsColumn<TypeBreakdown>[] = [
+  { key: "type", label: "TYPE", format: "task-type" },
+  { key: "invitationCount", label: "SENT", format: "number" },
+  { key: "credited", label: "COMPLETED", format: "number" },
+  { key: "completionRate", label: "RATE", format: "percent" },
+  { key: "totalCredited", label: "CREDITED", format: "money" },
+];
+
+const platformColumns: InsightsColumn<PlatformBreakdown>[] = [
+  { key: "platform", label: "PLATFORM", format: "platform" },
+  { key: "invitationCount", label: "SENT", format: "number" },
+  { key: "credited", label: "COMPLETED", format: "number" },
+  { key: "completionRate", label: "RATE", format: "percent" },
+];
+
+const creatorColumns: InsightsColumn<CreatorBreakdown>[] = [
+  { key: "handle", label: "CREATOR" },
+  { key: "niches", label: "NICHES", format: "niches" },
+  { key: "followerCount", label: "FOLLOWERS", format: "number" },
+  { key: "invitationCount", label: "COLLABS", format: "number" },
+  { key: "credited", label: "COMPLETED", format: "number" },
+  { key: "completionRate", label: "COMPLETION", format: "percent" },
+  { key: "totalEarned", label: "EARNED", format: "money" },
+];
 
 export default async function AdminInsightsPage() {
   const admin = await requireAdminSession();
@@ -44,6 +79,7 @@ export default async function AdminInsightsPage() {
     influencerHandle: inv.influencer.handle,
     influencerFollowerCount: inv.influencer.followerCount,
     influencerNiches: inv.influencer.niches.map((n) => n.niche.name),
+    creditedAt: inv.creditedAt,
   }));
 
   const overview = computeOverview(rows);
@@ -51,10 +87,27 @@ export default async function AdminInsightsPage() {
   const byCreator = computeByCreator(rows);
   const byType = computeByType(rows);
   const byPlatform = computeByPlatform(rows);
+  const trend = computeCreditedTrend(rows);
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-xl font-semibold tracking-tight">Insights</h1>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h1 className="text-xl font-semibold tracking-tight">Insights</h1>
+        <div className="flex items-center gap-3">
+          <a
+            href="/admin/export/verification"
+            className="text-xs font-medium border border-border rounded-full px-4 py-2 hover:border-accent hover:text-accent transition-colors"
+          >
+            Export for verification (CSV)
+          </a>
+          <a
+            href="/admin/export/payouts"
+            className="text-xs font-medium border border-border rounded-full px-4 py-2 hover:border-accent hover:text-accent transition-colors"
+          >
+            Export payouts (CSV)
+          </a>
+        </div>
+      </div>
 
       {rows.length === 0 ? (
         <div className="text-sm text-muted border border-border px-6 py-10 text-center">
@@ -63,7 +116,7 @@ export default async function AdminInsightsPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-6 border border-border divide-x divide-border">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 border border-border divide-x divide-y sm:divide-y-0 divide-border">
             <StatTile label="Invitations" value={overview.totalInvitations.toString()} />
             <StatTile label="Distinct collabs" value={overview.distinctTasks.toString()} />
             <StatTile label="Brands active" value={overview.activeBrands.toString()} />
@@ -72,7 +125,7 @@ export default async function AdminInsightsPage() {
             <StatTile label="Total credited" value={`$${overview.totalCredited.toFixed(2)}`} accent />
           </div>
 
-          <div className="grid grid-cols-5 border border-border divide-x divide-border text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-5 border border-border divide-x divide-y sm:divide-y-0 divide-border text-center">
             <StatusTile label="Awaiting response" value={overview.pending} />
             <StatusTile label="In progress" value={overview.inProgress} />
             <StatusTile label="Declined" value={overview.declined} />
@@ -85,89 +138,68 @@ export default async function AdminInsightsPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold">By brand ({byBrand.length})</h2>
-            <div className="border border-border">
-              <div className="grid grid-cols-[1.4fr_0.8fr_0.9fr_0.8fr_0.9fr_1fr_1fr] px-5.5 py-3 text-[11px] text-muted">
-                <div>BRAND</div>
-                <div>COLLABS</div>
-                <div>INVITATIONS</div>
-                <div>COMPLETED</div>
-                <div>COMPLETION</div>
-                <div>COMMITTED</div>
-                <div>CREDITED</div>
-              </div>
-              {byBrand.map((b) => (
-                <div
-                  key={b.key}
-                  className="grid grid-cols-[1.4fr_0.8fr_0.9fr_0.8fr_0.9fr_1fr_1fr] items-center px-5.5 py-3 border-t border-border-light"
-                >
-                  <div className="text-sm font-medium">{b.name}</div>
-                  <div className="font-mono text-sm">{b.taskCount}</div>
-                  <div className="font-mono text-sm">{b.invitationCount}</div>
-                  <div className="font-mono text-sm">{b.credited}</div>
-                  <div className="font-mono text-sm">{b.completionRate}%</div>
-                  <div className="font-mono text-sm">${b.totalCommitted.toFixed(2)}</div>
-                  <div className="font-mono text-sm text-success">
-                    ${b.totalCredited.toFixed(2)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-8">
-            <div className="flex flex-col gap-3">
-              <h2 className="text-base font-semibold">By collab type</h2>
-              <div className="border border-border">
-                <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr_1fr] px-5.5 py-3 text-[11px] text-muted">
-                  <div>TYPE</div>
-                  <div>SENT</div>
-                  <div>COMPLETED</div>
-                  <div>RATE</div>
-                  <div>CREDITED</div>
-                </div>
-                {byType.map((t) => (
-                  <div
-                    key={t.type}
-                    className="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr_1fr] items-center px-5.5 py-3 border-t border-border-light"
-                  >
-                    <div className="font-mono text-[11px] text-muted">
-                      {TASK_TYPE_LABEL[t.type]}
+            <h2 className="text-base font-semibold">Credited — last 14 days</h2>
+            <div className="border border-border overflow-x-auto">
+              <div className="flex divide-x divide-border-light min-w-max">
+                {trend.map((d) => (
+                  <div key={d.date} className="px-4 py-3 flex flex-col gap-1 min-w-[84px]">
+                    <div className="text-[10px] text-muted font-mono">{d.date.slice(5)}</div>
+                    <div className="font-mono text-sm font-medium">{d.count}</div>
+                    <div className="font-mono text-[11px] text-success">
+                      ${d.amount.toFixed(0)}
                     </div>
-                    <div className="font-mono text-sm">{t.invitationCount}</div>
-                    <div className="font-mono text-sm">{t.credited}</div>
-                    <div className="font-mono text-sm">{t.completionRate}%</div>
-                    <div className="font-mono text-sm">${t.totalCredited.toFixed(2)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <h2 className="text-base font-semibold">By platform</h2>
-              <div className="border border-border">
-                <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr] px-5.5 py-3 text-[11px] text-muted">
-                  <div>PLATFORM</div>
-                  <div>SENT</div>
-                  <div>COMPLETED</div>
-                  <div>RATE</div>
-                </div>
-                {byPlatform.map((p) => (
-                  <div
-                    key={p.platform}
-                    className="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr] items-center px-5.5 py-3 border-t border-border-light"
-                  >
-                    <div className="text-sm">{capitalize(p.platform.toLowerCase())}</div>
-                    <div className="font-mono text-sm">{p.invitationCount}</div>
-                    <div className="font-mono text-sm">{p.credited}</div>
-                    <div className="font-mono text-sm">{p.completionRate}%</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <CreatorInsightsTable rows={byCreator} />
+          <InsightsTable
+            title="By brand"
+            rows={byBrand}
+            columns={brandColumns}
+            idKey="key"
+            gridColsClass="grid grid-cols-[1.4fr_0.8fr_0.9fr_0.8fr_0.9fr_1fr_1fr]"
+            minWidthClass="min-w-[720px]"
+            defaultSortKey="totalCredited"
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <InsightsTable
+              title="By collab type"
+              rows={byType}
+              columns={typeColumns}
+              idKey="type"
+              gridColsClass="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr_1fr]"
+              minWidthClass="min-w-[480px]"
+              defaultSortKey="invitationCount"
+            />
+
+            <InsightsTable
+              title="By platform"
+              rows={byPlatform}
+              columns={platformColumns}
+              idKey="platform"
+              gridColsClass="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr]"
+              minWidthClass="min-w-[400px]"
+              defaultSortKey="invitationCount"
+            />
+          </div>
+
+          <InsightsTable
+            title="By creator"
+            rows={byCreator}
+            columns={creatorColumns}
+            idKey="id"
+            gridColsClass="grid grid-cols-[1.2fr_1.4fr_0.7fr_0.9fr_0.7fr_0.9fr_0.9fr]"
+            minWidthClass="min-w-[720px]"
+            defaultSortKey="totalEarned"
+            scrollable
+            search={{
+              placeholder: "Search by handle or niche…",
+              keys: ["handle", "niches"],
+            }}
+          />
         </>
       )}
     </div>

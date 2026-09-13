@@ -222,6 +222,10 @@ model TaskInvitation {
   influencerId String
   status       InvitationStatus @default(PENDING)
   respondedAt  DateTime?
+  // Set the moment status flips to CREDITED (automated verification success
+  // or an admin's manual "Mark credited" override) — powers the admin
+  // Insights trend view and payout export. Null until then.
+  creditedAt   DateTime?
   createdAt    DateTime         @default(now())
 
   ledgerEntry WalletLedgerEntry?

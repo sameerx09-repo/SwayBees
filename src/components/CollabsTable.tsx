@@ -59,55 +59,58 @@ export function CollabsTable({
   const gridClass = markCreditedAction
     ? "grid grid-cols-[1.4fr_0.9fr_0.8fr_0.8fr_0.8fr_0.8fr_0.9fr]"
     : "grid grid-cols-[1.6fr_1fr_0.9fr_0.9fr_0.9fr_0.9fr]";
+  const minWidthClass = markCreditedAction ? "min-w-[760px]" : "min-w-[680px]";
 
   return (
-    <div className="border border-border">
-      <div className={`${gridClass} px-5.5 py-3 text-[11px] text-muted`}>
-        <div>COLLAB</div>
-        <div>CREATOR</div>
-        <div>TYPE</div>
-        <div>PLATFORM</div>
-        <div>STATUS</div>
-        <div>PAYOUT</div>
-        {markCreditedAction && <div>ACTION</div>}
-      </div>
-      {rows.length === 0 ? (
-        <div className="text-sm text-muted px-5.5 py-8 text-center border-t border-border-light">
-          {emptyMessage}
+    <div className="border border-border overflow-x-auto">
+      <div className={minWidthClass}>
+        <div className={`${gridClass} px-5.5 py-3 text-[11px] text-muted`}>
+          <div>COLLAB</div>
+          <div>CREATOR</div>
+          <div>TYPE</div>
+          <div>PLATFORM</div>
+          <div>STATUS</div>
+          <div>PAYOUT</div>
+          {markCreditedAction && <div>ACTION</div>}
         </div>
-      ) : (
-        rows.map((row) => (
-          <div
-            key={row.id}
-            className={`${gridClass} items-center px-5.5 py-3.5 border-t border-border-light`}
-          >
-            <div className="text-sm">{row.description}</div>
-            <div className="text-sm text-muted-strong">{row.creatorHandle}</div>
-            <div className="font-mono text-[11px] text-muted">
-              {TASK_TYPE_LABEL[row.type]}
-            </div>
-            <div className="font-mono text-[11px] text-muted">
-              {capitalize(row.platform.toLowerCase())}
-            </div>
-            <div className={`text-xs ${statusColor[row.status]}`}>
-              {statusLabel[row.status]}
-            </div>
-            <div className="font-mono text-sm">${row.payoutAmount.toFixed(2)}</div>
-            {markCreditedAction && (
-              <div>
-                {MANUALLY_CREDITABLE.includes(row.status) && (
-                  <form action={markCreditedAction}>
-                    <input type="hidden" name="invitationId" value={row.id} />
-                    <button type="submit" className="text-xs font-medium underline">
-                      Mark credited
-                    </button>
-                  </form>
-                )}
-              </div>
-            )}
+        {rows.length === 0 ? (
+          <div className="text-sm text-muted px-5.5 py-8 text-center border-t border-border-light">
+            {emptyMessage}
           </div>
-        ))
-      )}
+        ) : (
+          rows.map((row) => (
+            <div
+              key={row.id}
+              className={`${gridClass} items-center px-5.5 py-3.5 border-t border-border-light`}
+            >
+              <div className="text-sm">{row.description}</div>
+              <div className="text-sm text-muted-strong">{row.creatorHandle}</div>
+              <div className="font-mono text-[11px] text-muted">
+                {TASK_TYPE_LABEL[row.type]}
+              </div>
+              <div className="font-mono text-[11px] text-muted">
+                {capitalize(row.platform.toLowerCase())}
+              </div>
+              <div className={`text-xs ${statusColor[row.status]}`}>
+                {statusLabel[row.status]}
+              </div>
+              <div className="font-mono text-sm">${row.payoutAmount.toFixed(2)}</div>
+              {markCreditedAction && (
+                <div>
+                  {MANUALLY_CREDITABLE.includes(row.status) && (
+                    <form action={markCreditedAction}>
+                      <input type="hidden" name="invitationId" value={row.id} />
+                      <button type="submit" className="text-xs font-medium underline">
+                        Mark credited
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

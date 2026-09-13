@@ -113,7 +113,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-muted">Type</span>
           <select
@@ -222,7 +222,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-muted">Max total budget ($)</span>
           <input
@@ -256,7 +256,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
       </p>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="text-xs text-muted">
             Send to ({selected.size}/{maxCreators} selected)
           </div>
@@ -265,7 +265,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by handle or niche…"
-            className="text-sm border-b border-border pb-1.5 bg-transparent outline-none focus:border-ink w-56"
+            className="text-sm border-b border-border pb-1.5 bg-transparent outline-none focus:border-ink w-full sm:w-56"
           />
         </div>
         <div className="border border-border max-h-64 overflow-y-auto divide-y divide-border-light">
@@ -279,21 +279,23 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
               return (
                 <label
                   key={c.id}
-                  className={`flex items-center justify-between px-4 py-2.5 text-sm ${
+                  className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm ${
                     disabled ? "opacity-40" : "cursor-pointer hover:bg-accent-soft"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <input
                       type="checkbox"
                       checked={selected.has(c.id)}
                       disabled={disabled}
                       onChange={() => toggleCreator(c.id)}
                     />
-                    <span className="font-medium">{c.handle}</span>
-                    <span className="text-xs text-muted">{c.niches.join(", ")}</span>
+                    <span className="font-medium truncate">{c.handle}</span>
+                    <span className="text-xs text-muted truncate hidden sm:inline">
+                      {c.niches.join(", ")}
+                    </span>
                   </div>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="font-mono text-xs text-muted whitespace-nowrap">
                     {c.followerCount.toLocaleString()} followers
                   </span>
                 </label>

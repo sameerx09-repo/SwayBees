@@ -62,7 +62,7 @@ export function CollabsClient({
             No new collabs right now — check back soon.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {invitations.map((inv) => (
               <div
                 key={inv.id}
@@ -115,56 +115,58 @@ export function CollabsClient({
 
       <section className="flex flex-col gap-4">
         <h2 className="text-base font-semibold">Active collabs</h2>
-        <div className="border border-border rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-[2fr_1fr_0.8fr_0.8fr_1.3fr] px-5.5 py-3 text-[11px] text-muted">
-            <div>COLLAB</div>
-            <div>BRAND</div>
-            <div>STATUS</div>
-            <div>PAYOUT</div>
-            <div>ACTION</div>
-          </div>
-          {activeCollabs.length === 0 ? (
-            <div className="text-sm text-muted px-5.5 py-8 text-center border-t border-border-light">
-              Nothing here yet — accepted invitations will show up as active collabs.
+        <div className="border border-border rounded-2xl overflow-x-auto">
+          <div className="min-w-[560px]">
+            <div className="grid grid-cols-[2fr_1fr_0.8fr_0.8fr_1.3fr] px-5.5 py-3 text-[11px] text-muted">
+              <div>COLLAB</div>
+              <div>BRAND</div>
+              <div>STATUS</div>
+              <div>PAYOUT</div>
+              <div>ACTION</div>
             </div>
-          ) : (
-            activeCollabs.map((t) => (
-              <div
-                key={t.id}
-                className="grid grid-cols-[2fr_1fr_0.8fr_0.8fr_1.3fr] items-center px-5.5 py-3.5 border-t border-border-light"
-              >
-                <div className="text-sm">{t.name}</div>
-                <div className="text-sm text-muted-strong">{t.brand}</div>
-                <div className={`text-xs ${statusColor[t.status] ?? "text-muted"}`}>
-                  {t.status}
-                </div>
-                <div className="font-mono text-sm">{t.amount}</div>
-                <div className="flex flex-col gap-0.5">
-                  {t.status === "Accepted" && (
-                    <button
-                      disabled={isPending}
-                      onClick={() => startTransition(() => submitInvitation(t.id))}
-                      className="text-xs font-medium underline disabled:opacity-50 text-left"
-                    >
-                      Mark as posted
-                    </button>
-                  )}
-                  {(t.status === "Submitted" || t.status === "Verifying") && (
-                    <button
-                      disabled={isPending}
-                      onClick={() => runCheck(t.id)}
-                      className="text-xs font-medium underline disabled:opacity-50 text-left"
-                    >
-                      Check verification
-                    </button>
-                  )}
-                  {notes[t.id] && (
-                    <span className="text-[11px] text-muted">{notes[t.id]}</span>
-                  )}
-                </div>
+            {activeCollabs.length === 0 ? (
+              <div className="text-sm text-muted px-5.5 py-8 text-center border-t border-border-light">
+                Nothing here yet — accepted invitations will show up as active collabs.
               </div>
-            ))
-          )}
+            ) : (
+              activeCollabs.map((t) => (
+                <div
+                  key={t.id}
+                  className="grid grid-cols-[2fr_1fr_0.8fr_0.8fr_1.3fr] items-center px-5.5 py-3.5 border-t border-border-light"
+                >
+                  <div className="text-sm">{t.name}</div>
+                  <div className="text-sm text-muted-strong">{t.brand}</div>
+                  <div className={`text-xs ${statusColor[t.status] ?? "text-muted"}`}>
+                    {t.status}
+                  </div>
+                  <div className="font-mono text-sm">{t.amount}</div>
+                  <div className="flex flex-col gap-0.5">
+                    {t.status === "Accepted" && (
+                      <button
+                        disabled={isPending}
+                        onClick={() => startTransition(() => submitInvitation(t.id))}
+                        className="text-xs font-medium underline disabled:opacity-50 text-left"
+                      >
+                        Mark as posted
+                      </button>
+                    )}
+                    {(t.status === "Submitted" || t.status === "Verifying") && (
+                      <button
+                        disabled={isPending}
+                        onClick={() => runCheck(t.id)}
+                        className="text-xs font-medium underline disabled:opacity-50 text-left"
+                      >
+                        Check verification
+                      </button>
+                    )}
+                    {notes[t.id] && (
+                      <span className="text-[11px] text-muted">{notes[t.id]}</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </section>
     </>

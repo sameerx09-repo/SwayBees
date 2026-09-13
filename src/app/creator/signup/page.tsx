@@ -15,12 +15,12 @@ export default function CreatorSignupPage() {
   );
 
   return (
-    <div className="flex flex-col items-center pt-20 pb-20">
+    <div className="flex flex-col items-center px-4 pt-14 sm:pt-20 pb-20">
       <div className="mb-9">
         <Logo size="sm" />
       </div>
 
-      <div className="w-[420px] bg-surface border border-border p-11 flex flex-col gap-7">
+      <div className="w-full max-w-[420px] bg-surface border border-border p-6 sm:p-11 flex flex-col gap-7">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Join as a creator</h1>
           <p className="text-sm text-muted mt-1.5">

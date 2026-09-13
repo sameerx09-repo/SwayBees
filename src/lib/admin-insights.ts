@@ -18,6 +18,7 @@ export type InsightRow = {
   influencerHandle: string;
   influencerFollowerCount: number;
   influencerNiches: string[];
+  creditedAt: Date | null;
 };
 
 const IN_PROGRESS: InvitationStatus[] = ["ACCEPTED", "SUBMITTED", "VERIFYING"];
@@ -186,6 +187,42 @@ export function computeByType(rows: InsightRow[]): TypeBreakdown[] {
       };
     })
     .sort((a, b) => b.invitationCount - a.invitationCount);
+}
+
+export type TrendDay = {
+  date: string; // YYYY-MM-DD
+  count: number;
+  amount: number;
+};
+
+/**
+ * Daily credited count/amount for the trailing `days` days (default 14),
+ * oldest first, zero-filled so gaps don't disappear from the view. Relies
+ * on TaskInvitation.creditedAt, only ever set by the two places a
+ * collab actually gets paid (checkVerification success, admin's "Mark
+ * credited") — rows credited before that field existed have no value and
+ * are simply excluded from the trend rather than mis-bucketed.
+ */
+export function computeCreditedTrend(rows: InsightRow[], days = 14): TrendDay[] {
+  const buckets = new Map<string, TrendDay>();
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    buckets.set(key, { date: key, count: 0, amount: 0 });
+  }
+
+  for (const row of rows) {
+    if (!row.creditedAt) continue;
+    const key = row.creditedAt.toISOString().slice(0, 10);
+    const bucket = buckets.get(key);
+    if (!bucket) continue; // outside the trailing window
+    bucket.count += 1;
+    bucket.amount += row.payoutAmount;
+  }
+
+  return Array.from(buckets.values());
 }
 
 export type PlatformBreakdown = {

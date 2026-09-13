@@ -109,7 +109,7 @@ export async function markInvitationCredited(formData: FormData) {
   await db.$transaction([
     db.taskInvitation.update({
       where: { id: invitationId },
-      data: { status: InvitationStatus.CREDITED },
+      data: { status: InvitationStatus.CREDITED, creditedAt: new Date() },
     }),
     db.walletLedgerEntry.update({
       where: { invitationId },
@@ -122,4 +122,5 @@ export async function markInvitationCredited(formData: FormData) {
   ]);
 
   revalidatePath("/admin");
+  revalidatePath("/admin/insights");
 }

@@ -27,8 +27,8 @@ export default async function SettingsPage() {
     <div className="flex flex-col gap-7">
       <h1 className="text-xl font-semibold tracking-tight">Account settings</h1>
 
-      <div className="grid grid-cols-2 border border-border">
-        <div className="p-6.5 flex flex-col gap-4.5 border-r border-b border-border">
+      <div className="grid grid-cols-1 lg:grid-cols-2 border border-border">
+        <div className="p-6.5 flex flex-col gap-4.5 lg:border-r border-b border-border">
           <div className="text-sm text-muted">Company profile</div>
           <div className="flex items-center gap-3.5">
             <div className="h-11 w-11 bg-accent-soft" />
@@ -108,7 +108,7 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div className="p-6.5 flex flex-col gap-4 border-r border-border">
+        <div className="p-6.5 flex flex-col gap-4 lg:border-r border-b lg:border-b-0 border-border">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted">Target audience</div>
             <a href="#" className="text-xs font-medium">

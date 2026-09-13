@@ -30,8 +30,8 @@ export default async function ProfilePage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold tracking-tight">Profile</h1>
 
-      <div className="grid grid-cols-2 border border-border">
-        <div className="p-6.5 flex flex-col gap-4 border-r border-border">
+      <div className="grid grid-cols-1 sm:grid-cols-2 border border-border">
+        <div className="p-6.5 flex flex-col gap-4 sm:border-r border-b sm:border-b-0 border-border">
           <div className="text-sm text-muted">Instagram</div>
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold">{influencer.handle}</div>

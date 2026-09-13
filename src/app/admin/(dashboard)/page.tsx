@@ -54,13 +54,18 @@ export default async function AdminPage() {
       <AdhocCollabForm creators={creators} />
 
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <h2 className="text-base font-semibold">
             Most recent {Math.min(RECENT_LIMIT, recentCount)} of {recentCount} dispatched
           </h2>
-          <Link href="/admin/insights" className="text-xs font-medium underline">
-            Full breakdown by brand/creator/type &rarr;
-          </Link>
+          <div className="flex items-center gap-5">
+            <a href="/admin/export/verification" className="text-xs font-medium underline">
+              Export all for verification (CSV)
+            </a>
+            <Link href="/admin/insights" className="text-xs font-medium underline">
+              Full breakdown by brand/creator/type &rarr;
+            </Link>
+          </div>
         </div>
         <CollabsTable
           rows={rows}

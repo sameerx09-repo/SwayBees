@@ -54,9 +54,9 @@ function ShareIcon() {
 export default function LandingPage() {
   return (
     <div className="flex flex-col">
-      <header className="flex items-center justify-between px-18 py-6 border-b border-border-light sticky top-0 bg-paper/85 backdrop-blur-sm z-10">
+      <header className="flex items-center justify-between px-4 sm:px-8 lg:px-18 py-5 sm:py-6 border-b border-border-light sticky top-0 bg-paper/85 backdrop-blur-sm z-10">
         <Logo />
-        <nav className="flex items-center gap-10">
+        <nav className="hidden md:flex items-center gap-10">
           <a href="#how-it-works" className="text-sm text-muted-strong">
             How it works
           </a>
@@ -71,9 +71,15 @@ export default function LandingPage() {
           </Link>
           <Button href="/signup">Get started</Button>
         </nav>
+        <div className="flex md:hidden items-center gap-4">
+          <Link href="/login" className="text-sm text-muted-strong">
+            Log in
+          </Link>
+          <Button href="/signup">Get started</Button>
+        </div>
       </header>
 
-      <section className="grid grid-cols-[1.15fr_0.85fr] gap-16 px-18 py-24 lg:py-28 items-center">
+      <section className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-10 lg:gap-16 px-4 sm:px-8 lg:px-18 py-14 sm:py-20 lg:py-28 items-center">
         <div className="flex flex-col gap-7">
           <div className="inline-flex w-fit items-center gap-2 rounded-full bg-accent-soft px-3.5 py-1.5">
             <div className="h-1.5 w-1.5 rounded-full bg-gradient-social" />
@@ -81,7 +87,7 @@ export default function LandingPage() {
               FOR BEAUTY, WELLNESS &amp; DTC BRANDS
             </div>
           </div>
-          <h1 className="text-5xl font-bold tracking-tight leading-[1.1] max-w-xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.15] lg:leading-[1.1] max-w-xl">
             UGC and engagement,{" "}
             <span className="text-gradient-social">on autopilot.</span>
           </h1>
@@ -90,7 +96,7 @@ export default function LandingPage() {
             collabs, verifies every post automatically, and pays out. No briefs to
             write, no submissions to review.
           </p>
-          <div className="flex items-center gap-6 pt-2">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2">
             <Button href="/signup">Start your plan</Button>
             <a href="#how-it-works" className="text-sm font-semibold flex items-center gap-1.5">
               See how it works <span>&rarr;</span>
@@ -138,11 +144,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="flex border-t border-b border-border-light px-18">
+      <section className="flex flex-col sm:flex-row border-t border-b border-border-light px-4 sm:px-8 lg:px-18">
         {stats.map(({ label, value }, i) => (
           <div
             key={label}
-            className={`flex-1 py-6.5 ${i > 0 ? "border-l border-border-light pl-8" : ""}`}
+            className={`flex-1 py-5 sm:py-6.5 ${
+              i > 0 ? "border-t sm:border-t-0 sm:border-l border-border-light sm:pl-8" : ""
+            }`}
           >
             <div className="text-[22px] font-bold text-gradient-social">{value}</div>
             <div className="text-sm text-muted mt-0.5">{label}</div>
@@ -150,9 +158,9 @@ export default function LandingPage() {
         ))}
       </section>
 
-      <section id="how-it-works" className="px-18 py-24 flex flex-col gap-13">
+      <section id="how-it-works" className="px-4 sm:px-8 lg:px-18 py-14 sm:py-20 lg:py-24 flex flex-col gap-10 lg:gap-13">
         <h2 className="text-[26px] font-bold tracking-tight">How it works</h2>
-        <div className="grid grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 lg:gap-12">
           {steps.map((s) => (
             <div key={s.n} className="flex flex-col gap-3.5">
               <div className="h-9 w-9 rounded-full bg-gradient-social text-white flex items-center justify-center text-xs font-bold">
@@ -165,9 +173,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="plans" className="px-18 pb-26 flex flex-col gap-11">
+      <section id="plans" className="px-4 sm:px-8 lg:px-18 pb-16 sm:pb-20 lg:pb-26 flex flex-col gap-11">
         <h2 className="text-[26px] font-bold tracking-tight">Plans</h2>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="p-9 rounded-3xl border border-border flex flex-col gap-5.5">
             <div>
               <div className="text-[15px] font-semibold">Starter</div>
@@ -216,7 +224,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="flex items-center justify-between px-18 py-6.5 border-t border-border-light">
+      <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-8 lg:px-18 py-6.5 border-t border-border-light">
         <div className="text-sm text-muted">&copy; SwayFam</div>
         <div className="flex gap-6">
           <a href="#" className="text-sm text-muted">

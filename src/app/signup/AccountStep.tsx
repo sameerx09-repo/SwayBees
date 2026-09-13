@@ -15,10 +15,10 @@ export function AccountStep() {
   );
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center px-4 w-full">
       <StepIndicator step={1} />
 
-      <div className="w-[500px] bg-surface border border-border p-11 flex flex-col gap-7">
+      <div className="w-full max-w-[500px] bg-surface border border-border p-6 sm:p-11 flex flex-col gap-7">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
           <p className="text-sm text-muted mt-1.5">
