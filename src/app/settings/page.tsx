@@ -55,7 +55,7 @@ export default async function SettingsPage() {
           <div className="pt-3 border-t border-border-light">
             <InstagramHandleForm instagramHandle={brand.instagramHandle ?? ""} />
             <p className="text-[11px] text-muted mt-2 max-w-[280px]">
-              Used to find your latest public post so SwayFam can verify
+              Used to find your latest public post so SwayBees can verify
               comment collabs against it — see BUILD_STATUS.md.
             </p>
           </div>

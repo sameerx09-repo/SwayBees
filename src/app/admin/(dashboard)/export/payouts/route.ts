@@ -55,6 +55,6 @@ export async function GET() {
     .map((c) => [c.handle, c.email, c.count, c.total.toFixed(2), c.walletBalance.toFixed(2)]);
 
   const csv = buildCsv(headers, rows);
-  const filename = `swayfam-payouts-${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `swaybees-payouts-${new Date().toISOString().slice(0, 10)}.csv`;
   return csvResponse(csv, filename);
 }

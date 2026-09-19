@@ -75,7 +75,7 @@ export async function GET() {
       STATUS_LABEL[inv.status] ?? inv.status,
       TASK_TYPE_LABEL[inv.task.type],
       capitalize(inv.task.platform.toLowerCase()),
-      inv.task.brand?.companyName ?? "SwayFam (ad-hoc)",
+      inv.task.brand?.companyName ?? "SwayBees (ad-hoc)",
       inv.task.description,
       inv.task.verificationTag ?? "",
       inv.task.targetPostUrl ?? "",
@@ -93,6 +93,6 @@ export async function GET() {
   });
 
   const csv = buildCsv(headers, rows);
-  const filename = `swayfam-collabs-verification-${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `swaybees-collabs-verification-${new Date().toISOString().slice(0, 10)}.csv`;
   return csvResponse(csv, filename);
 }

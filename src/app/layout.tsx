@@ -15,7 +15,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SwayFam",
+  title: "SwayBees",
   description: "UGC and engagement, on autopilot.",
 };
 

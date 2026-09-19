@@ -50,7 +50,7 @@ export default async function HistoryPage() {
               >
                 <div className="text-sm">{p.task.description}</div>
                 <div className="text-sm text-muted-strong">
-                  {p.task.brand?.companyName ?? "SwayFam"}
+                  {p.task.brand?.companyName ?? "SwayBees"}
                 </div>
                 <div className="font-mono text-[11px] text-muted">
                   {TASK_TYPE_LABEL[p.task.type]}

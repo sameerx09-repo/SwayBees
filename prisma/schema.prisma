@@ -191,7 +191,7 @@ model Influencer {
 // nullable: an admin-created ad-hoc task has no real brand or budget
 // behind it — it exists purely to seed creator engagement before
 // organic brand signups exist. UI falls back to displaying
-// "SwayFam" as the task's source when brand is null.
+// "SwayBees" as the task's source when brand is null.
 model Task {
   id           String   @id @default(cuid())
   brand        Brand?   @relation(fields: [brandId], references: [id])

@@ -92,7 +92,7 @@ export default function LandingPage() {
             <span className="text-gradient-social">on autopilot.</span>
           </h1>
           <p className="text-base leading-relaxed text-muted-strong max-w-md">
-            Subscribe, set a budget, and SwayFam sources creators, dispatches
+            Subscribe, set a budget, and SwayBees sources creators, dispatches
             collabs, verifies every post automatically, and pays out. No briefs to
             write, no submissions to review.
           </p>
@@ -113,7 +113,7 @@ export default function LandingPage() {
             </div>
             <div className="flex flex-col">
               <div className="text-sm font-semibold">lumiere.skincare</div>
-              <div className="text-[11px] text-muted">Sponsored &middot; via SwayFam</div>
+              <div className="text-[11px] text-muted">Sponsored &middot; via SwayBees</div>
             </div>
           </div>
           <div className="h-64 bg-gradient-social" />
@@ -225,7 +225,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-8 lg:px-18 py-6.5 border-t border-border-light">
-        <div className="text-sm text-muted">&copy; SwayFam</div>
+        <div className="text-sm text-muted">&copy; SwayBees</div>
         <div className="flex gap-6">
           <a href="#" className="text-sm text-muted">
             Privacy

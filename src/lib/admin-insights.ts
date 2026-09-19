@@ -93,7 +93,7 @@ export function computeByBrand(rows: InsightRow[]): BrandBreakdown[] {
       const credited = group.filter((r) => r.status === "CREDITED").length;
       return {
         key,
-        name: key === "__adhoc__" ? "SwayFam (ad-hoc)" : group[0].brandName!,
+        name: key === "__adhoc__" ? "SwayBees (ad-hoc)" : group[0].brandName!,
         taskCount: new Set(group.map((r) => r.taskId)).size,
         invitationCount: group.length,
         credited,

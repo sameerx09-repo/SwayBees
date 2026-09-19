@@ -157,7 +157,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
           name="description"
           required
           rows={2}
-          placeholder="e.g. Post a reel styling one piece from your closet with #SwayFamSeed"
+          placeholder="e.g. Post a reel styling one piece from your closet with #SwayBeesSeed"
           className="text-sm border-b border-border pb-2 bg-transparent outline-none focus:border-ink resize-none"
         />
       </label>
@@ -170,7 +170,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
           <input
             type="text"
             name="verificationTag"
-            placeholder="#SwayFamSeed"
+            placeholder="#SwayBeesSeed"
             className="text-sm border-b border-border pb-2 bg-transparent outline-none focus:border-ink"
           />
         </label>

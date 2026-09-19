@@ -38,7 +38,7 @@ export default async function CollabsPage({
 
   const invitationRows: InvitationRow[] = invitations.map((inv) => ({
     id: inv.id,
-    brand: inv.task.brand?.companyName ?? "SwayFam",
+    brand: inv.task.brand?.companyName ?? "SwayBees",
     type: inv.task.type,
     description: inv.task.description,
     payoutLabel:
@@ -50,7 +50,7 @@ export default async function CollabsPage({
   const activeCollabRows: ActiveCollabRow[] = activeInvitations.map((inv) => ({
     id: inv.id,
     name: inv.task.description,
-    brand: inv.task.brand?.companyName ?? "SwayFam",
+    brand: inv.task.brand?.companyName ?? "SwayBees",
     status: statusLabel[inv.status]!,
     amount: `$${inv.task.payoutAmount.toFixed(2)}`,
   }));

@@ -10,7 +10,7 @@ export function Logo({ size = "md" }: { size?: "sm" | "md" }) {
       >
         <span className={`${mark} font-bold`}>S</span>
       </div>
-      <div className={`${word} font-bold tracking-tight`}>SwayFam</div>
+      <div className={`${word} font-bold tracking-tight`}>SwayBees</div>
     </div>
   );
 }

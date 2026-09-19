@@ -44,7 +44,7 @@ export function CampaignStep({ companyName }: { companyName: string }) {
             Set up your campaign, {companyName}
           </h1>
           <p className="text-sm text-muted mt-1.5">
-            This decides what SwayFam creates and who it&rsquo;s matched to.
+            This decides what SwayBees creates and who it&rsquo;s matched to.
           </p>
         </div>
 
