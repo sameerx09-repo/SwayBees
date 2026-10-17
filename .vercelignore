@@ -9,3 +9,8 @@
 .env*.local
 prisma/*.db
 prisma/*.db-journal
+
+# Local plaintext password handoff files must never enter deployment bundles.
+.credentials/
+security_best_practices_report.md
+docs/security-*-audit-*.json

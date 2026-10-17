@@ -44,3 +44,6 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local credential exports must never be committed or served.
+/.credentials/

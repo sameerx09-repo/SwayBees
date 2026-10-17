@@ -1,18 +1,29 @@
+import { getTaskMode } from "@/lib/application-mode";
+import { redirect } from "next/navigation";
+import { formatINR } from "@/lib/currency";
 import { db } from "@/lib/db";
-import { requireInfluencerSession } from "@/lib/auth";
+import { getSession, requireInfluencerSession } from "@/lib/auth";
 import { TASK_TYPE_LABEL } from "@/lib/task-type-label";
 
 export default async function HistoryPage() {
-  const influencer = (await requireInfluencerSession())!;
+  const mode = await getTaskMode();
+  const session = await getSession();
+  if (!session || session.kind !== "influencer") redirect("/creator/login");
 
-  const past = await db.taskInvitation.findMany({
+  const [influencer, past] = await Promise.all([
+    requireInfluencerSession(),
+    db.taskInvitation.findMany({
     where: {
-      influencerId: influencer.id,
+      influencerId: session.id,
+      task: { mode },
       status: { in: ["CREDITED", "DECLINED"] },
     },
-    include: { task: { include: { brand: true } }, ledgerEntry: true },
+    select: { id: true, status: true, task: { select: { description: true, type: true, payoutAmount: true, brand: { select: { companyName: true } } } } },
+    relationLoadStrategy: "join",
     orderBy: { createdAt: "desc" },
-  });
+    }),
+  ]);
+  if (!influencer) redirect("/creator/login");
 
   const totalEarned = past
     .filter((p) => p.status === "CREDITED")
@@ -23,8 +34,8 @@ export default async function HistoryPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold tracking-tight">Collab history</h1>
         <div className="text-right">
-          <div className="text-[11px] text-muted">Total earned</div>
-          <div className="font-mono text-lg font-medium">${totalEarned.toFixed(2)}</div>
+          <div className="text-[11px] text-muted">{mode === "TEST" ? "Total test earnings" : "Total earned"}</div>
+          <div className="font-mono text-lg font-medium">{formatINR(totalEarned)}</div>
         </div>
       </div>
 
@@ -63,7 +74,7 @@ export default async function HistoryPage() {
                   {p.status === "CREDITED" ? "Completed" : "Declined"}
                 </div>
                 <div className="font-mono text-sm">
-                  {p.status === "CREDITED" ? `$${p.task.payoutAmount.toFixed(2)}` : "—"}
+                  {p.status === "CREDITED" ? formatINR(p.task.payoutAmount) : "—"}
                 </div>
               </div>
             ))

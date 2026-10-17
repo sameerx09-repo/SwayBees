@@ -1,3 +1,5 @@
+import { getTaskMode } from "@/lib/application-mode";
+import { cache } from "react";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
@@ -72,30 +74,39 @@ export async function clearSessionCookie() {
   cookieStore.delete(SESSION_COOKIE);
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
+export const getSession = cache(async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return verifySessionToken(token);
-}
+});
 
 /** Session + the full Brand record, or null if not signed in as a brand. */
-export async function requireBrandSession() {
+export const requireBrandSession = cache(async function requireBrandSession() {
   const session = await getSession();
   if (!session || session.kind !== "brand") return null;
-  return db.brand.findUnique({ where: { id: session.id } });
-}
+  return db.brand.findUnique({ where: { id: session.id }, include: { subscription: true, criteria: true }, relationLoadStrategy: "join" });
+});
 
-/** Session + the full Influencer record, or null if not signed in as an influencer. */
-export async function requireInfluencerSession() {
+/** Request-scoped creator record and joined profile data; never shared between users. */
+export const requireInfluencerSession = cache(async function requireInfluencerSession() {
   const session = await getSession();
   if (!session || session.kind !== "influencer") return null;
-  return db.influencer.findUnique({ where: { id: session.id } });
-}
+  const mode = await getTaskMode();
+  return db.influencer.findUnique({
+    where: { id: session.id },
+    include: {
+      niches: { select: { niche: { select: { name: true } } } },
+      socialAccounts: { select: { platform: true, handle: true } },
+      _count: { select: { niches: true, invitations: { where: { status: "CREDITED", task: { mode } } } } },
+    },
+    relationLoadStrategy: "join",
+  });
+});
 
-/** Session + the full Admin record, or null if not signed in as an admin. */
-export async function requireAdminSession() {
+/** Request-scoped admin identity, or null if the session/account is invalid. */
+export const requireAdminSession = cache(async function requireAdminSession() {
   const session = await getSession();
   if (!session || session.kind !== "admin") return null;
-  return db.admin.findUnique({ where: { id: session.id } });
-}
+  return db.admin.findUnique({ where: { id: session.id }, select: { id: true, email: true } });
+});

@@ -1,4 +1,6 @@
 "use server";
+import { getTaskMode } from "@/lib/application-mode";
+
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
@@ -12,7 +14,7 @@ export async function runTaskGeneration(): Promise<
   if (!brand) return { error: "Not signed in." };
 
   try {
-    const result = await generateTasksForBrand(brand.id);
+    const result = await generateTasksForBrand(brand.id, await getTaskMode());
     revalidatePath("/settings");
     return result;
   } catch (err) {

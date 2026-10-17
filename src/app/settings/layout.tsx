@@ -1,21 +1,17 @@
+import { getTaskMode } from "@/lib/application-mode";
+import { modeName } from "@/lib/task-mode";
+import { ModeSwitch, ModeNotice } from "@/components/ModeSwitch";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { requireBrandSession } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
 import { BrandTabNav } from "./BrandTabNav";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session || session.kind !== "brand") {
-    redirect("/login");
-  }
-
-  const brand = await db.brand.findUniqueOrThrow({
-    where: { id: session.id },
-    include: { subscription: true },
-  });
+  const mode = await getTaskMode();
+  const brand = await requireBrandSession();
+  if (!brand) redirect("/login");
 
   if (!brand.subscription) {
     redirect("/signup");
@@ -25,6 +21,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
     <div className="flex flex-col gap-6 sm:gap-7 px-4 sm:px-8 lg:px-18 py-6 sm:py-10">
       <header className="flex items-center justify-between gap-4 flex-wrap pb-6 border-b border-border">
         <Logo />
+        <ModeSwitch mode={modeName(mode)} />
         <div className="flex items-center gap-4 sm:gap-5 flex-wrap">
           <div className="text-xs font-semibold text-accent bg-accent-soft rounded-full px-3 py-1.5">
             {brand.subscription.plan} PLAN
@@ -48,6 +45,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
         <BrandTabNav />
       </div>
 
+      <ModeNotice mode={modeName(mode)} />
       {children}
     </div>
   );

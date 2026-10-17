@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/admin", label: "Post a collab" },
+  { href: "/admin/tasks", label: "All tasks" },
   { href: "/admin/insights", label: "Insights" },
+  { href: "/admin/api-keys", label: "API keys" },
 ];
 
 export function AdminTabNav() {

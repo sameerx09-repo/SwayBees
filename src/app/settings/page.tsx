@@ -1,19 +1,11 @@
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { requireBrandSession } from "@/lib/auth";
 import { GenerateCollabsButton } from "./GenerateCollabsButton";
 import { InstagramHandleForm } from "./InstagramHandleForm";
 
 export default async function SettingsPage() {
-  const session = await getSession();
-  if (!session || session.kind !== "brand") {
-    redirect("/login");
-  }
-
-  const brand = await db.brand.findUniqueOrThrow({
-    where: { id: session.id },
-    include: { subscription: true, criteria: true },
-  });
+  const brand = await requireBrandSession();
+  if (!brand) redirect("/login");
 
   if (!brand.subscription || !brand.criteria) {
     redirect("/signup");
@@ -81,7 +73,7 @@ export default async function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold">Monthly budget</div>
               <div className="font-mono text-sm">
-                ${sub.monthlyBudget.toLocaleString()}
+                ${sub.monthlyBudget.toLocaleString("en-US")}
               </div>
             </div>
             <div className="w-full h-[3px] bg-border">
@@ -92,7 +84,7 @@ export default async function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <div className="text-xs text-muted">
-                ${sub.spentThisCycle.toLocaleString()} spent this cycle
+                ${sub.spentThisCycle.toLocaleString("en-US")} spent this cycle
               </div>
               <a href="#" className="text-xs font-medium">
                 Adjust budget

@@ -1,3 +1,4 @@
+import { getTaskMode } from "@/lib/application-mode";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -9,15 +10,27 @@ import { markInvitationCredited } from "./actions";
 const RECENT_LIMIT = 10;
 
 export default async function AdminPage() {
+  const mode = await getTaskMode();
   const admin = await requireAdminSession();
   if (!admin) {
     redirect("/admin/login");
   }
 
-  const influencers = await db.influencer.findMany({
-    include: { niches: { include: { niche: true } } },
-    orderBy: { handle: "asc" },
-  });
+  const [influencers, recentCount, recentInvitations] = await Promise.all([
+    db.influencer.findMany({
+      select: { id: true, handle: true, followerCount: true, gender: true, niches: { select: { niche: { select: { name: true } } } } },
+      relationLoadStrategy: "join",
+      orderBy: { handle: "asc" },
+    }),
+    db.taskInvitation.count({ where: { task: { brandId: null, mode } } }),
+    db.taskInvitation.findMany({
+      where: { task: { brandId: null, mode } },
+      select: { id: true, status: true, task: { select: { description: true, type: true, platform: true, payoutAmount: true } }, influencer: { select: { handle: true } } },
+      relationLoadStrategy: "join",
+      orderBy: { createdAt: "desc" },
+      take: RECENT_LIMIT,
+    }),
+  ]);
 
   const creators: CreatorOption[] = influencers.map((inf) => ({
     id: inf.id,
@@ -26,16 +39,6 @@ export default async function AdminPage() {
     gender: inf.gender,
     niches: inf.niches.map((n) => n.niche.name),
   }));
-
-  const [recentCount, recentInvitations] = await Promise.all([
-    db.taskInvitation.count({ where: { task: { brandId: null } } }),
-    db.taskInvitation.findMany({
-      where: { task: { brandId: null } },
-      include: { task: true, influencer: true },
-      orderBy: { createdAt: "desc" },
-      take: RECENT_LIMIT,
-    }),
-  ]);
 
   const rows: CollabRow[] = recentInvitations.map((inv) => ({
     id: inv.id,

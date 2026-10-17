@@ -1,3 +1,4 @@
+import { getTaskMode } from "@/lib/application-mode";
 import { db } from "@/lib/db";
 import { requireAdminSession } from "@/lib/auth";
 import { buildCsv, csvResponse } from "@/lib/csv";
@@ -11,8 +12,8 @@ const STATUS_LABEL: Record<string, string> = {
   PENDING: "Awaiting response",
   ACCEPTED: "Accepted",
   DECLINED: "Declined",
-  SUBMITTED: "Submitted",
-  VERIFYING: "Verifying",
+  SUBMITTED: "In review",
+  VERIFYING: "In review",
   CREDITED: "Completed",
 };
 
@@ -28,12 +29,14 @@ const STATUS_LABEL: Record<string, string> = {
  * link — session cookie rides along automatically.
  */
 export async function GET() {
+  const mode = await getTaskMode();
   const admin = await requireAdminSession();
   if (!admin) {
     return new Response("Not signed in.", { status: 401 });
   }
 
   const invitations = await db.taskInvitation.findMany({
+    where: { task: { mode } },
     include: {
       task: { include: { brand: true } },
       influencer: {
@@ -43,10 +46,12 @@ export async function GET() {
         },
       },
     },
+    relationLoadStrategy: "join",
     orderBy: { createdAt: "desc" },
   });
 
   const headers = [
+    "Mode",
     "Invitation ID",
     "Status",
     "Collab Type",
@@ -61,7 +66,7 @@ export async function GET() {
     "Creator Niches",
     "Creator Twitter Handle",
     "Creator Reddit Handle",
-    "Payout Amount",
+    "Payout Amount (INR)",
     "Dispatched At",
     "Responded At",
     "Credited At",
@@ -71,6 +76,7 @@ export async function GET() {
     const twitter = inv.influencer.socialAccounts.find((s) => s.platform === "TWITTER");
     const reddit = inv.influencer.socialAccounts.find((s) => s.platform === "REDDIT");
     return [
+      mode.toLowerCase(),
       inv.id,
       STATUS_LABEL[inv.status] ?? inv.status,
       TASK_TYPE_LABEL[inv.task.type],
@@ -93,6 +99,6 @@ export async function GET() {
   });
 
   const csv = buildCsv(headers, rows);
-  const filename = `swaybees-collabs-verification-${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `swaybees-${mode.toLowerCase()}-collabs-verification-${new Date().toISOString().slice(0, 10)}.csv`;
   return csvResponse(csv, filename);
 }

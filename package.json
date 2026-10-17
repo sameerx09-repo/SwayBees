@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 5100",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:bulk": "tsx prisma/seed-bulk-creators.ts",
-    "db:seed:admin": "tsx prisma/seed-admin.ts"
+    "db:seed:admin": "tsx prisma/seed-admin.ts",
+    "db:seed:influencer-db": "tsx prisma/seed-influencer-db.ts",
+    "security:rotate-passwords": "tsx scripts/rotate-passwords.ts",
+    "test:login-security": "tsx scripts/test-login-security.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

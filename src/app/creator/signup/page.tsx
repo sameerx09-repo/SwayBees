@@ -24,8 +24,8 @@ export default function CreatorSignupPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Join as a creator</h1>
           <p className="text-sm text-muted mt-1.5">
-            Get matched to paid UGC and comment collabs. Connect Instagram after
-            you sign up.
+            Register to see brand details, payouts and full briefs for collabs matched
+            to you. Complete your profile after signup to get started.
           </p>
         </div>
 
@@ -66,6 +66,8 @@ export default function CreatorSignupPage() {
             {isPending ? "Creating account…" : "Create account"}
           </Button>
         </form>
+
+        <Link href="/#available-collabs" className="text-xs text-muted text-center underline">Browse collab previews</Link>
 
         <p className="text-xs text-muted text-center">
           Already a creator?{" "}

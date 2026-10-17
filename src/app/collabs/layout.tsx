@@ -1,3 +1,7 @@
+import { getTaskMode } from "@/lib/application-mode";
+import { modeName } from "@/lib/task-mode";
+import { ModeSwitch, ModeNotice } from "@/components/ModeSwitch";
+import { formatINR } from "@/lib/currency";
 import { redirect } from "next/navigation";
 import { requireInfluencerSession } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
@@ -6,6 +10,7 @@ import { TabNav } from "./TabNav";
 export const dynamic = "force-dynamic";
 
 export default async function CollabsLayout({ children }: { children: React.ReactNode }) {
+  const mode = await getTaskMode();
   const influencer = await requireInfluencerSession();
   if (!influencer) {
     redirect("/creator/login");
@@ -15,6 +20,7 @@ export default async function CollabsLayout({ children }: { children: React.Reac
     <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-8 lg:px-18 py-6 sm:py-10">
       <header className="flex items-center justify-between gap-4 flex-wrap pb-6 border-b border-border">
         <Logo />
+        <ModeSwitch mode={modeName(mode)} />
         <div className="flex items-center gap-4 sm:gap-7 flex-wrap">
           <div className="flex items-center gap-2.5">
             <div className="h-7 w-7 rounded-full bg-gradient-social flex items-center justify-center text-[10px] font-bold text-white">
@@ -33,11 +39,11 @@ export default async function CollabsLayout({ children }: { children: React.Reac
             )}
           </div>
           <div className="flex flex-col items-end gap-0.5 sm:pl-6 sm:border-l sm:border-border">
-            <div className="text-[11px] text-muted">Wallet balance</div>
+            <div className="text-[11px] text-muted">{mode === "TEST" ? "Test balance" : "Wallet balance"}</div>
             <div className="font-mono text-lg font-medium">
-              ${influencer.walletBalance.toFixed(2)}
+              {formatINR(mode === "TEST" ? influencer.testWalletBalance : influencer.walletBalance)}
             </div>
-            <div className="text-[11px] text-muted">Next payout Sep 1</div>
+            <div className="text-[11px] text-muted">{mode === "TEST" ? "Simulated earnings — no payout" : "Payouts processed after approval"}</div>
           </div>
           <a
             href="/logout"
@@ -52,6 +58,7 @@ export default async function CollabsLayout({ children }: { children: React.Reac
         <TabNav />
       </div>
 
+      <ModeNotice mode={modeName(mode)} />
       {children}
     </div>
   );

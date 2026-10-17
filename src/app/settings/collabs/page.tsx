@@ -1,19 +1,24 @@
+import { getTaskMode } from "@/lib/application-mode";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireBrandSession } from "@/lib/auth";
+import { getSession, requireBrandSession } from "@/lib/auth";
 import { CollabsTable, type CollabRow } from "@/components/CollabsTable";
 
 export default async function BrandCollabsPage() {
-  const brand = await requireBrandSession();
-  if (!brand) {
-    redirect("/login");
-  }
+  const mode = await getTaskMode();
+  const session = await getSession();
+  if (!session || session.kind !== "brand") redirect("/login");
 
-  const invitations = await db.taskInvitation.findMany({
-    where: { task: { brandId: brand.id } },
-    include: { task: true, influencer: true },
+  const [brand, invitations] = await Promise.all([
+    requireBrandSession(),
+    db.taskInvitation.findMany({
+    where: { task: { brandId: session.id, mode } },
+    select: { id: true, status: true, task: { select: { description: true, type: true, platform: true, payoutAmount: true } }, influencer: { select: { handle: true } } },
+    relationLoadStrategy: "join",
     orderBy: { createdAt: "desc" },
-  });
+    }),
+  ]);
+  if (!brand) redirect("/login");
 
   const counts = invitations.reduce(
     (acc, inv) => {

@@ -224,7 +224,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs text-muted">Max total budget ($)</span>
+          <span className="text-xs text-muted">Max total budget (INR)</span>
           <input
             type="number"
             name="maxBudget"
@@ -237,7 +237,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs text-muted">Max payout per creator ($)</span>
+          <span className="text-xs text-muted">Max payout per creator (INR)</span>
           <input
             type="number"
             name="payoutAmount"
@@ -296,7 +296,7 @@ export function AdhocCollabForm({ creators }: { creators: CreatorOption[] }) {
                     </span>
                   </div>
                   <span className="font-mono text-xs text-muted whitespace-nowrap">
-                    {c.followerCount.toLocaleString()} followers
+                    {c.followerCount.toLocaleString("en-US")} followers
                   </span>
                 </label>
               );

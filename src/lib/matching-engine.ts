@@ -6,7 +6,7 @@
 // dashboard rather than running on a timer.
 
 import { db } from "@/lib/db";
-import { TaskType, Platform, type Influencer } from "@prisma/client";
+import { TaskType, Platform, TaskMode, type Influencer } from "@prisma/client";
 import {
   UGC_COST,
   BLENDED_COMMENT_COST,
@@ -18,7 +18,7 @@ import { scrapeRecentPosts, profileUrlForHandle } from "@/lib/apify";
 const RECENCY_PENALTY_DAYS = 7;
 const RECENCY_PENALTY_SCORE = 5;
 
-type Candidate = Influencer & { lastTaskedAt: Date | null };
+export type Candidate = Influencer & { lastTaskedAt: Date | null };
 
 function withinAgeRange(age: number | null, min: number, max: number): boolean {
   return age !== null && age >= min && age <= max;
@@ -30,7 +30,7 @@ function locationMatches(influencerLocation: string | null, criteriaLocation: st
   return wanted.some((city) => influencerLocation.toLowerCase().includes(city));
 }
 
-type CriteriaInput = {
+export type CriteriaInput = {
   gender: string;
   ageMin: number;
   ageMax: number;
@@ -40,13 +40,18 @@ type CriteriaInput = {
 };
 
 /** Persona gate — hard-filters the influencer pool against the brand's audience criteria. */
-async function findEligibleInfluencers(criteria: CriteriaInput): Promise<Candidate[]> {
+export async function findEligibleInfluencers(criteria: CriteriaInput, mode: TaskMode = TaskMode.LIVE): Promise<Candidate[]> {
   const all = await db.influencer.findMany({
     include: {
-      invitations: { orderBy: { createdAt: "desc" }, take: 1 },
+      invitations: { where: { task: { mode } }, orderBy: { createdAt: "desc" }, take: 1 },
       niches: { include: { niche: true } },
       socialAccounts: true,
     },
+    // Runs on every brand-triggered generation and every external API
+    // call (POST /api/v1/tasks, GET .../preview) — a hot path, so the
+    // round-trip-count win from a single joined query matters more here
+    // than almost anywhere else in the app.
+    relationLoadStrategy: "join",
   });
 
   return all
@@ -99,7 +104,7 @@ function tierOf(followerCount: number): FollowerTier {
  * overall (see WIP.md "diversify follower tiers in proportion to
  * available budget").
  */
-function selectDiversified(candidates: Candidate[], count: number): Candidate[] {
+export function selectDiversified(candidates: Candidate[], count: number): Candidate[] {
   const byTier = new Map<FollowerTier, Candidate[]>();
   for (const c of candidates) {
     const tier = tierOf(c.followerCount);
@@ -171,11 +176,11 @@ function commentTaskCopy(platform: Platform, companyName: string, hasNewContent:
   const target = hasNewContent ? "the newest post" : `${companyName}'s latest post`;
   switch (platform) {
     case Platform.TWITTER:
-      return `Reply to ${target} for ${companyName}. Faster replies pay more — up to $2 within 30 minutes.`;
+      return `Reply to ${target} for ${companyName}. Complete the task, then submit it for review.`;
     case Platform.REDDIT:
-      return `Comment on ${target} for ${companyName}. Faster replies pay more — up to $2 within 30 minutes.`;
+      return `Comment on ${target} for ${companyName}. Complete the task, then submit it for review.`;
     default:
-      return `Comment on ${target} for ${companyName}. Faster replies pay more — up to $2 within 30 minutes.`;
+      return `Comment on ${target} for ${companyName}. Complete the task, then submit it for review.`;
   }
 }
 
@@ -185,7 +190,7 @@ export type GenerateTasksResult = {
   eligiblePoolSize: number;
 };
 
-export async function generateTasksForBrand(brandId: string): Promise<GenerateTasksResult> {
+export async function generateTasksForBrand(brandId: string, mode: TaskMode = TaskMode.LIVE): Promise<GenerateTasksResult> {
   const brand = await db.brand.findUniqueOrThrow({
     where: { id: brandId },
     include: { subscription: true, criteria: true },
@@ -201,7 +206,7 @@ export async function generateTasksForBrand(brandId: string): Promise<GenerateTa
   const ugcTaskCount = Math.floor(ugcBudget / UGC_COST);
   const commentTaskCount = Math.floor(engagementBudget / BLENDED_COMMENT_COST);
 
-  const eligible = await findEligibleInfluencers(brand.criteria);
+  const eligible = await findEligibleInfluencers(brand.criteria, mode);
 
   const ugcRecipients = selectDiversified(eligible, ugcTaskCount);
   let ugcTasksCreated = 0;
@@ -212,6 +217,7 @@ export async function generateTasksForBrand(brandId: string): Promise<GenerateTa
     const task = await db.task.create({
       data: {
         brandId,
+        mode,
         type: TaskType.UGC_VIDEO,
         platform,
         description,
@@ -242,7 +248,7 @@ export async function generateTasksForBrand(brandId: string): Promise<GenerateTa
   // cycle targets the same real post (only Instagram is checkable;
   // Twitter/Reddit have no verification path yet, see BUILD_STATUS.md).
   const targetPostUrl =
-    platform === Platform.INSTAGRAM && commentRecipients.length > 0
+    mode === TaskMode.LIVE && platform === Platform.INSTAGRAM && commentRecipients.length > 0
       ? await resolveCommentTargetUrl(brand.instagramHandle)
       : null;
 
@@ -251,6 +257,7 @@ export async function generateTasksForBrand(brandId: string): Promise<GenerateTa
     const task = await db.task.create({
       data: {
         brandId,
+        mode,
         type: TaskType.COMMENT,
         platform,
         description: commentTaskCopy(platform, brand.companyName, hasNewContent),

@@ -1,27 +1,14 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { verifyPassword, setSessionCookie } from "@/lib/auth";
+import { setSessionCookie } from "@/lib/auth";
+import { authenticatePasswordLogin } from "@/lib/password-login";
 
 export type LoginState = { error?: string };
 
-export async function loginBrand(
-  _prevState: LoginState,
-  formData: FormData
-): Promise<LoginState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "");
-
-  if (!email || !password) {
-    return { error: "Enter your email and password." };
-  }
-
-  const brand = await db.brand.findUnique({ where: { email } });
-  if (!brand || !(await verifyPassword(password, brand.passwordHash))) {
-    return { error: "That email/password combination doesn't match an account." };
-  }
-
-  await setSessionCookie({ kind: "brand", id: brand.id });
+export async function loginBrand(_prevState: LoginState, formData: FormData): Promise<LoginState> {
+  const result = await authenticatePasswordLogin("brand", formData);
+  if ("error" in result) return result;
+  await setSessionCookie({ kind: "brand", id: result.id });
   redirect("/settings");
 }

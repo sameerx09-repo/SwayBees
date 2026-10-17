@@ -1,3 +1,4 @@
+import { getTaskMode } from "@/lib/application-mode";
 import { db } from "@/lib/db";
 import { requireAdminSession } from "@/lib/auth";
 import { buildCsv, csvResponse } from "@/lib/csv";
@@ -16,9 +17,12 @@ export async function GET() {
     return new Response("Not signed in.", { status: 401 });
   }
 
+  if ((await getTaskMode()) === "TEST") return new Response("Test mode has simulated earnings only. Switch to Live for payout exports.", { status: 403 });
+
   const credited = await db.taskInvitation.findMany({
-    where: { status: "CREDITED" },
+    where: { status: "CREDITED", task: { mode: "LIVE" } },
     include: { task: true, influencer: true },
+    relationLoadStrategy: "join",
   });
 
   const byCreator = new Map<

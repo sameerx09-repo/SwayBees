@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { getTaskMode } from "@/lib/application-mode";
 import { requireAdminSession } from "@/lib/auth";
-import { Platform, TaskType, InvitationStatus, LedgerStatus } from "@prisma/client";
+import { Platform, TaskType } from "@prisma/client";
+
+import { approveTask } from "@/lib/task-workflow";
 
 const VALID_PLATFORMS = new Set(Object.values(Platform));
 const VALID_TYPES = new Set(Object.values(TaskType));
@@ -56,13 +59,15 @@ export async function createAdhocCollab(
   const maxCreators = Math.floor(maxBudget / payoutAmount);
   if (influencerIds.length > maxCreators) {
     return {
-      error: `${influencerIds.length} creators selected, but a $${maxBudget} budget at $${payoutAmount}/creator only covers ${maxCreators}.`,
+      error: `${influencerIds.length} creators selected, but a ₹${maxBudget} budget at ₹${payoutAmount}/creator only covers ${maxCreators}.`,
     };
   }
 
+  const mode = await getTaskMode();
   const task = await db.task.create({
     data: {
       brandId: null,
+      mode,
       type,
       platform,
       description,
@@ -82,45 +87,14 @@ export async function createAdhocCollab(
   };
 }
 
-/**
- * The only way a Like/Share collab (or anything else stuck on a real
- * verification failure) ever gets paid — there's no automated path for
- * those, by design (see the TaskType comment in schema.prisma). Plain
- * form-action, not useActionState — this is a one-click admin override,
- * not a form with its own validation state.
- */
+/** Backend-only approval, atomic and safe to retry. */
 export async function markInvitationCredited(formData: FormData) {
-  const admin = await requireAdminSession();
-  if (!admin) return;
-
+  if (!(await requireAdminSession())) return;
   const invitationId = String(formData.get("invitationId") ?? "");
-  const invitation = await db.taskInvitation.findUnique({
-    where: { id: invitationId },
-    include: { task: true },
-  });
-  if (!invitation) return;
-  if (
-    invitation.status !== InvitationStatus.SUBMITTED &&
-    invitation.status !== InvitationStatus.VERIFYING
-  ) {
-    return;
-  }
-
-  await db.$transaction([
-    db.taskInvitation.update({
-      where: { id: invitationId },
-      data: { status: InvitationStatus.CREDITED, creditedAt: new Date() },
-    }),
-    db.walletLedgerEntry.update({
-      where: { invitationId },
-      data: { status: LedgerStatus.CREDITED },
-    }),
-    db.influencer.update({
-      where: { id: invitation.influencerId },
-      data: { walletBalance: { increment: invitation.task.payoutAmount } },
-    }),
-  ]);
-
+  const mode = await getTaskMode();
+  await db.$transaction((tx) => approveTask(tx, invitationId, mode));
   revalidatePath("/admin");
+  revalidatePath("/admin/tasks");
   revalidatePath("/admin/insights");
+  revalidatePath("/collabs", "layout");
 }

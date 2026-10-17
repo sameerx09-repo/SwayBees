@@ -1,5 +1,13 @@
+// relationJoins: lets a query opt into a single SQL query with LEFT
+// JOINs for nested `include`s, instead of Prisma's default of one
+// sequential round-trip per relation level. Matters a lot here because
+// the DB is a remote Neon instance, not localhost — each round-trip
+// costs real network latency, so a 3-level-deep include (invitation →
+// influencer → niches → niche) was costing 6 sequential round-trips
+// (~5s) instead of 1 (~1s). See InsightRow's query in admin/insights.
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
 // Postgres (Neon, via Vercel's marketplace integration) — was SQLite for
@@ -12,6 +20,11 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum TaskMode {
+  TEST
+  LIVE
 }
 
 enum Plan {
@@ -71,6 +84,27 @@ model Admin {
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
+}
+
+// Credential for an external system calling POST /api/v1/tasks (see that
+// route) — not tied to any one Brand, since one integration (e.g. a
+// partner UGC-creation app) typically acts on behalf of many brands,
+// naming the target brand per-request instead. Only a SHA-256 hash of
+// the raw key is ever stored (API keys are high-entropy random secrets,
+// not low-entropy human passwords, so a fast cryptographic hash is the
+// right tool here, not bcrypt) — the raw value is shown to the admin
+// exactly once, at creation time, via createApiKey's return value.
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  keyHash    String    @unique
+  // First few characters of the raw key, kept in plaintext purely so the
+  // admin UI can show "sk_live_a3f9…" to help identify a key without
+  // ever being able to reconstruct the full secret from it.
+  keyPrefix  String
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
 }
 
 model Brand {
@@ -171,6 +205,7 @@ model Influencer {
   instagramTokenExpires  DateTime?
   instagramLastSyncedAt  DateTime?
   walletBalance      Float    @default(0)
+  testWalletBalance  Float    @default(0)
   // Self-declared, unverified — see WIP.md "Matching engine": Instagram's
   // API doesn't reliably expose age/gender, so the persona-gate matches
   // against whatever the influencer reports here.
@@ -193,6 +228,7 @@ model Influencer {
 // organic brand signups exist. UI falls back to displaying
 // "SwayBees" as the task's source when brand is null.
 model Task {
+  mode         TaskMode @default(LIVE)
   id           String   @id @default(cuid())
   brand        Brand?   @relation(fields: [brandId], references: [id])
   brandId      String?
@@ -212,6 +248,9 @@ model Task {
   createdAt    DateTime @default(now())
 
   invitations TaskInvitation[]
+
+  @@index([mode, createdAt])
+  @@index([brandId, mode])
 }
 
 model TaskInvitation {
@@ -243,4 +282,13 @@ model WalletLedgerEntry {
   amount       Float
   status       LedgerStatus   @default(PENDING)
   createdAt    DateTime       @default(now())
+}
+
+// HMAC identifiers avoid retaining raw emails or IP addresses in login counters.
+model LoginRateLimit {
+  key       String   @id
+  attempts  Int
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }

@@ -7,9 +7,12 @@ import bcrypt from "bcryptjs";
 const db = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.ADMIN_SEED_EMAIL ?? "admin@swaybees.internal";
-const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD ?? "password123";
+const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD;
 
 async function main() {
+  if (!ADMIN_PASSWORD || ADMIN_PASSWORD.length < 16 || Buffer.byteLength(ADMIN_PASSWORD) > 72) {
+    throw new Error("Set ADMIN_SEED_PASSWORD to a unique password of 16–72 bytes. No default administrator password is allowed.");
+  }
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
 
   await db.admin.upsert({
@@ -18,7 +21,7 @@ async function main() {
     create: { email: ADMIN_EMAIL, passwordHash },
   });
 
-  console.log(`Admin account ready: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  console.log(`Admin account ready: ${ADMIN_EMAIL}. Password is not displayed.`);
   console.log("Override with ADMIN_SEED_EMAIL / ADMIN_SEED_PASSWORD env vars before running.");
 }
 

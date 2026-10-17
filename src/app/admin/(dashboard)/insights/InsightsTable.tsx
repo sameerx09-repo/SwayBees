@@ -1,8 +1,11 @@
 "use client";
+import { formatINR } from "@/lib/currency";
+
 
 import { useMemo, useState } from "react";
-import type { TaskType } from "@prisma/client";
+import type { InvitationStatus, TaskType } from "@prisma/client";
 import { TASK_TYPE_LABEL } from "@/lib/task-type-label";
+import { INVITATION_STATUS_LABEL, INVITATION_STATUS_COLOR } from "@/lib/invitation-status-label";
 
 export type CellFormat =
   | "text"
@@ -12,7 +15,9 @@ export type CellFormat =
   | "money-success"
   | "task-type"
   | "platform"
-  | "niches";
+  | "niches"
+  | "status"
+  | "date";
 
 export type InsightsColumn<T> = {
   key: keyof T & string;
@@ -31,13 +36,13 @@ function capitalize(s: string) {
 function renderCell(value: unknown, format?: CellFormat): React.ReactNode {
   switch (format) {
     case "money":
-      return `$${Number(value).toFixed(2)}`;
+      return formatINR(Number(value));
     case "money-success":
-      return <span className="text-success">${Number(value).toFixed(2)}</span>;
+      return <span className="text-success">{formatINR(Number(value))}</span>;
     case "percent":
       return `${value}%`;
     case "number":
-      return typeof value === "number" ? value.toLocaleString() : String(value);
+      return typeof value === "number" ? value.toLocaleString("en-US") : String(value);
     case "task-type":
       return (
         <span className="font-mono text-[11px] text-muted">
@@ -52,6 +57,12 @@ function renderCell(value: unknown, format?: CellFormat): React.ReactNode {
           {Array.isArray(value) ? value.join(", ") : String(value)}
         </span>
       );
+    case "status": {
+      const status = value as InvitationStatus;
+      return <span className={INVITATION_STATUS_COLOR[status]}>{INVITATION_STATUS_LABEL[status]}</span>;
+    }
+    case "date":
+      return value instanceof Date ? value.toLocaleString("en-US") : String(value ?? "");
     default:
       return String(value);
   }
@@ -125,7 +136,11 @@ export function InsightsTable<T extends Record<string, unknown>>({
       const av = a[sortKey];
       const bv = b[sortKey];
       const cmp =
-        typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
+        av instanceof Date && bv instanceof Date
+          ? av.getTime() - bv.getTime()
+          : typeof av === "number" && typeof bv === "number"
+          ? av - bv
+          : String(av).localeCompare(String(bv));
       return sortDir === "asc" ? cmp : -cmp;
     });
     return copy;

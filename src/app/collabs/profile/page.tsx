@@ -1,28 +1,25 @@
+import { getTaskMode } from "@/lib/application-mode";
+import { redirect } from "next/navigation";
+import { formatINR } from "@/lib/currency";
 import { db } from "@/lib/db";
-import { requireInfluencerSession } from "@/lib/auth";
+import { getSession, requireInfluencerSession } from "@/lib/auth";
 import { ProfileForm } from "./ProfileForm";
 import { SocialAccountsForm } from "./SocialAccountsForm";
 
 export default async function ProfilePage() {
-  const influencer = (await requireInfluencerSession())!;
-
-  const totalEarned = await db.walletLedgerEntry.aggregate({
-    where: { influencerId: influencer.id, status: { in: ["CREDITED", "PAID"] } },
-    _sum: { amount: true },
-  });
-
-  const completedCount = await db.taskInvitation.count({
-    where: { influencerId: influencer.id, status: "CREDITED" },
-  });
-
-  const niches = await db.influencerNiche.findMany({
-    where: { influencerId: influencer.id },
-    include: { niche: true },
-  });
-
-  const socialAccounts = await db.socialAccount.findMany({
-    where: { influencerId: influencer.id },
-  });
+  const mode = await getTaskMode();
+  const session = await getSession();
+  if (!session || session.kind !== "influencer") redirect("/creator/login");
+  const [influencer, totalEarned] = await Promise.all([
+    requireInfluencerSession(),
+    db.walletLedgerEntry.aggregate({
+      where: { influencerId: session.id, invitation: { task: { mode } }, status: { in: ["CREDITED", "PAID"] } },
+      _sum: { amount: true },
+    }),
+  ]);
+  if (!influencer) redirect("/creator/login");
+  const completedCount = influencer._count.invitations;
+  const { niches, socialAccounts } = influencer;
   const twitterHandle = socialAccounts.find((s) => s.platform === "TWITTER")?.handle ?? "";
   const redditHandle = socialAccounts.find((s) => s.platform === "REDDIT")?.handle ?? "";
 
@@ -49,7 +46,7 @@ export default async function ProfilePage() {
           <div className="flex flex-col gap-2 text-sm pt-3 border-t border-border-light">
             <div className="flex justify-between">
               <span className="text-muted">Followers</span>
-              <span className="font-mono">{influencer.followerCount.toLocaleString()}</span>
+              <span className="font-mono">{influencer.followerCount.toLocaleString("en-US")}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted">Engagement rate</span>
@@ -59,7 +56,7 @@ export default async function ProfilePage() {
               <span className="text-muted">Last synced</span>
               <span>
                 {influencer.instagramLastSyncedAt
-                  ? influencer.instagramLastSyncedAt.toLocaleDateString()
+                  ? influencer.instagramLastSyncedAt.toLocaleDateString("en-US")
                   : "Never"}
               </span>
             </div>
@@ -70,13 +67,13 @@ export default async function ProfilePage() {
           <div className="text-sm text-muted">Earnings</div>
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted">Wallet balance</span>
-              <span className="font-mono">${influencer.walletBalance.toFixed(2)}</span>
+              <span className="text-muted">{mode === "TEST" ? "Test balance" : "Wallet balance"}</span>
+              <span className="font-mono">{formatINR(mode === "TEST" ? influencer.testWalletBalance : influencer.walletBalance)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">Total earned</span>
+              <span className="text-muted">{mode === "TEST" ? "Total test earnings" : "Total earned"}</span>
               <span className="font-mono">
-                ${(totalEarned._sum.amount ?? 0).toFixed(2)}
+                {formatINR(totalEarned._sum.amount ?? 0)}
               </span>
             </div>
             <div className="flex justify-between">
