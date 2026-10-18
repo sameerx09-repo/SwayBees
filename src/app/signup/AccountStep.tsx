@@ -8,7 +8,7 @@ import { signupBrandAccount, type FormState } from "./actions";
 
 const initialState: FormState = {};
 
-export function AccountStep() {
+export function AccountStep({ initialPlan = "pro" }: { initialPlan?: "starter" | "pro" }) {
   const [state, formAction, isPending] = useActionState(
     signupBrandAccount,
     initialState
@@ -20,13 +20,14 @@ export function AccountStep() {
 
       <div className="w-full max-w-[500px] bg-surface border border-border p-6 sm:p-11 flex flex-col gap-7">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Create your brand account</h1>
           <p className="text-sm text-muted mt-1.5">
             Campaign setup — plan, budget, targeting — comes next.
           </p>
         </div>
 
         <form action={formAction} className="flex flex-col gap-5">
+          <input type="hidden" name="plan" value={initialPlan} />
           <label className="flex flex-col gap-1.5">
             <span className="text-xs text-muted">Company name</span>
             <input

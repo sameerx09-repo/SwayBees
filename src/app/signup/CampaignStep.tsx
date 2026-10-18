@@ -14,10 +14,10 @@ const PLATFORMS = [
 ] as const;
 const initialState: FormState = {};
 
-export function CampaignStep({ companyName }: { companyName: string }) {
+export function CampaignStep({ companyName, initialPlan = "pro" }: { companyName: string; initialPlan?: "starter" | "pro" }) {
   const [state, formAction, isPending] = useActionState(createCampaign, initialState);
 
-  const [plan, setPlan] = useState<"starter" | "pro">("pro");
+  const [plan, setPlan] = useState<"starter" | "pro">(initialPlan);
   const [platform, setPlatform] = useState<(typeof PLATFORMS)[number]["value"]>("INSTAGRAM");
   const [budget, setBudget] = useState(1000);
   const [gender, setGender] = useState<"any" | "women" | "men">("women");

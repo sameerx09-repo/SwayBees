@@ -45,7 +45,7 @@ export async function signupBrandAccount(
   }
 
   await setSessionCookie({ kind: "brand", id: brand.id });
-  redirect("/signup");
+  redirect(`/signup?plan=${formData.get("plan") === "starter" ? "starter" : "pro"}`);
 }
 
 export async function createCampaign(

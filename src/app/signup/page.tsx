@@ -7,7 +7,8 @@ import { CampaignStep } from "./CampaignStep";
 
 export const dynamic = "force-dynamic";
 
-export default async function SignupPage() {
+export default async function SignupPage({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
+  const requestedPlan = (await searchParams).plan === "starter" ? "starter" : "pro";
   const session = await getSession();
 
   // A signed-in influencer landed here by mistake — this flow is brand-only.
@@ -30,7 +31,7 @@ export default async function SignupPage() {
   return (
     <div className="flex flex-col items-center pt-13 pb-20 gap-9">
       <Logo size="sm" />
-      {brand ? <CampaignStep companyName={brand.companyName} /> : <AccountStep />}
+      {brand ? <CampaignStep companyName={brand.companyName} initialPlan={requestedPlan} /> : <AccountStep initialPlan={requestedPlan} />}
     </div>
   );
 }

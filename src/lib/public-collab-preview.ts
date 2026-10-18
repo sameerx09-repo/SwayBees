@@ -2,7 +2,7 @@ import type { TaskType } from "@prisma/client";
 
 const PUBLIC_ASK: Record<TaskType, { title: string; description: string; label: string }> = {
   COMMENT: { title: "Comment on an Instagram post", description: "Leave a thoughtful comment following the collab brief.", label: "Comment" },
-  UGC_VIDEO: { title: "Create a UGC video", description: "Create an original video following the brand brief.", label: "UGC video" },
+  UGC_VIDEO: { title: "Create 1 UGC video", description: "Create an original video following the brand brief.", label: "UGC video" },
   SHARE: { title: "Share an Instagram post", description: "Share content with your audience following the collab brief.", label: "Share" },
   LIKE: { title: "Like an Instagram post", description: "Like the post specified in the collab brief.", label: "Like" },
   TAG_FRIEND: { title: "Tag a friend in a comment", description: "Tag a friend on the post specified in the collab brief.", label: "Tag a friend" },

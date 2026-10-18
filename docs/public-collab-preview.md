@@ -1,6 +1,6 @@
 # Public collab preview
 
-The homepage retains its brand landing-page hero, workflow illustration, how-it-works section and plan cards. A compact Available collabs section sits directly after the hero and displays three preview rows. Cards contain no repeated signup CTA; clicking any card still opens creator signup. Unsupported creator counts, verification percentages, sample campaign metrics, and automation/payout marketing claims have been removed.
+The homepage follows the approved shared brand/creator design. Its hero and mobile-visible navigation offer separate audience paths; creator collabs sit beneath the hero, followed by clearly labelled brand workflow and plan sections. Two rows marked Example show Create 1 UGC video and Join a campaign and complete multiple tasks. These are illustrative formats, not claimed current inventory; a separate Available collabs list displays three actual Live previews. Cards contain no repeated signup CTA; clicking any card opens creator signup. Unsupported statistics and automation claims remain removed.
 
 The feed samples up to 24 recent Live Instagram tasks with at least one pending invitation, then selects up to six previews, preferring varied task types. The homepage displays the first three to keep the section compact. It does not expose Test tasks or create/accept an invitation for a visitor.
 
@@ -13,3 +13,7 @@ Signup remains the existing creator signup flow. Completing registration leads t
 The homepage is statically rendered with 60-second revalidation so guests do not wait on a database lookup for every visit. Empty or unavailable feeds show an honest signup prompt without fabricated tasks. No authentication checks or protected API behavior were relaxed.
 
 Validation: `npx tsx scripts/test-public-collab-preview.ts` checks safe projection, rendered markup, URL sanitization, signup links, mode/availability filtering, and UGC handling. Database fixtures are rolled back. Browser checks cover masking, no external Instagram links, signup navigation, zero console errors, and layouts at desktop, tablet and mobile widths. The production build confirms one-minute homepage revalidation.
+
+Audience-specific navigation and forms: `/login` begins with a neutral account choice, with explicit Brand log in or Creator log in headings once selected. Brand signup is labelled Create your brand account. Starter/Pro links pass an allowlisted plan through account signup to the campaign step. No campaign grouping or creator campaign-management workflow was introduced by the illustrative campaign row.
+
+Homepage browser checks cover 1280, 768, 390 and 320-pixel widths; both audience links remain visible without horizontal overflow. Example rows are labelled separately from current availability, and the preview privacy regression test still passes.
